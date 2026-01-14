@@ -100,17 +100,8 @@ export const Block: React.FC<BlockProps> = ({
     }
     
     if (e.key === 'Backspace' && inputRef.current) {
-      const input = inputRef.current;
       // Use localText here for instant check
       if (localText === '') {
-      const input = inputRef.current instanceof HTMLTextAreaElement
-        ? inputRef.current
-        : (inputRef.current as HTMLInputElement);
-      const value = input.value;
-
-      // Delete block if field is empty (works whether editing or not)
-      // This matches Notion's behavior: empty block + Backspace = delete block
-      if (value === '') {
         e.preventDefault();
         onDelete();
       }
@@ -127,15 +118,10 @@ export const Block: React.FC<BlockProps> = ({
     // 1. Update UI immediately
     setLocalText(newValue);
     
-    // 2. Sync to DB (even if this fails due to adblocker, UI stays intact)
+    // 2. Sync to DB
     onUpdate({ 
       text: newValue,
       content: newValue,
-  const updateText = (newText: string) => {
-    // Update both text and content for compatibility
-    onUpdate({
-      text: newText,
-      content: newText, // Simple text for now, can be enhanced with HTML later
     });
   };
 
@@ -276,7 +262,12 @@ export const Block: React.FC<BlockProps> = ({
           </button>
           <BlockTypeSelector
             currentType={block.type}
-            onChange={(type) => onUpdate({ type })}
+            onChange={(type) => canEdit && onUpdate({ type })}
+          />
+          <BlockPermissionSelector
+            currentType={block.permissions?.type}
+            onChange={(type) => onUpdate({ permissions: { ...block.permissions, type } })}
+            readOnly={!canChangePermissions}
           />
           
           <button
@@ -298,48 +289,17 @@ export const Block: React.FC<BlockProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0" onClick={() => !isEditing && setIsEditing(true)}>
+        <div className="flex-1 min-w-0" onClick={() => !isEditing && canEdit && setIsEditing(true)}>
           {renderContent()}
         </div>
-    <div
-      className="group/block relative flex items-start gap-2 py-1 px-1 -mx-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Drag Handle & Controls */}
-      <div className={`flex items-center gap-1 opacity-0 group-hover/block:opacity-100 transition-opacity ${isHovered ? 'opacity-100' : ''}`}>
-        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400">
-          <GripVertical size={14} />
-        </button>
-        <BlockTypeSelector
-          currentType={block.type}
-          onChange={(type) => canEdit && onUpdate({ type })}
-        />
-        <BlockPermissionSelector
-          currentType={block.permissions?.type}
-          onChange={(type) => onUpdate({ permissions: { ...block.permissions, type } })}
-          readOnly={!canChangePermissions}
-        />
-        <button
-          onClick={onDelete}
-          className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-          aria-label="Delete block"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0" onClick={() => !isEditing && canEdit && setIsEditing(true)}>
-        {renderContent()}
+        {/* Comment Thread Popup */}
+        {showComments && (
+          <div className="absolute right-0 z-20 mt-2 transform translate-x-full -translate-y-full md:translate-x-0 md:translate-y-2">
+               <CommentThread blockId={block.id} onClose={() => setShowComments(false)} />
+          </div>
+        )}
       </div>
-
-      {/* Comment Thread Popup */}
-      {showComments && (
-        <div className="absolute right-0 z-20 mt-2 transform translate-x-full -translate-y-full md:translate-x-0 md:translate-y-2">
-             <CommentThread blockId={block.id} onClose={() => setShowComments(false)} />
-        </div>
-      )}
     </>
   );
 };
