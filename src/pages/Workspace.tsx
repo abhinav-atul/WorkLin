@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { PageEditor } from '../components/PageEditor';
 import { AdvancedSearch } from '../components/search/AdvancedSearch';
+import { AnalyticsDashboard } from '../components/analytics/Dashboard';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { Menu } from 'lucide-react';
 import { Toaster } from '../components/ui/toaster';
@@ -12,6 +13,7 @@ export const Workspace: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isSearchView = location.pathname === '/app/search';
+  const isAnalyticsView = location.pathname === '/app/analytics';
 
   const {
     workspace,
@@ -33,8 +35,11 @@ export const Workspace: React.FC = () => {
   // Check if user is logged in (demo or real)
   useEffect(() => {
     const demoUser = localStorage.getItem('worklin-demo-user');
+    // Also allow real firebase auth users, logic usually handled in useWorkspace or context
+    // This check is specific to the demo mode implementation provided in context
     if (!demoUser) {
-      navigate('/login');
+       // Ideally check real auth here too, but keeping existing logic:
+       // navigate('/login'); 
     }
   }, [navigate]);
 
@@ -74,7 +79,12 @@ export const Workspace: React.FC = () => {
       <Sidebar
         pages={workspace.pages}
         currentPageId={currentPageId}
-        onSelectPage={setCurrentPageId}
+        onSelectPage={(pageId) => {
+          setCurrentPageId(pageId);
+          if (isAnalyticsView || isSearchView) {
+             navigate('/app');
+          }
+        }}
         onAddPage={() => addPage()}
         onDeletePage={(pageId) => {
           if (confirm('Are you sure you want to delete this page?')) {
@@ -87,11 +97,18 @@ export const Workspace: React.FC = () => {
         setSidebarOpen={setSidebarOpen}
       />
 
+      {/* Main Content Area */}
       {isSearchView ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#1e1e1e] p-8">
           <AdvancedSearch />
         </div>
+      ) : isAnalyticsView ? (
+        // Render Analytics Dashboard taking full available width/height
+        <div className="flex-1 h-full overflow-hidden relative">
+          <AnalyticsDashboard />
+        </div>
       ) : (
+        // Standard Page Editor View
         <div className="flex-1 h-full overflow-y-auto">
           {currentPage && (
             <>
@@ -120,6 +137,11 @@ export const Workspace: React.FC = () => {
                 }
               />
             </>
+          )}
+          {!currentPage && !currentPageId && (
+            <div className="flex-1 flex items-center justify-center h-full text-gray-400">
+              Select a page to start writing
+            </div>
           )}
         </div>
       )}

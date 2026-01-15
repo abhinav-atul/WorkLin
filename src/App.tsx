@@ -9,9 +9,6 @@ import { Toaster } from './components/ui/toaster';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 
-import { PageHeader } from './components/PageHeader'; // Adjust path if needed
-
-
 function App() {
   const { isOpen, setIsOpen } = useKeyboardShortcuts();
 
@@ -20,15 +17,17 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        
         <Route path="/app" element={<Workspace />} />
         <Route path="/app/search" element={<Workspace />} />
+        <Route path="/app/analytics" element={<Workspace />} />
+        
         <Route path="/security" element={<SecuritySettings />} />
         <Route path="/audit-log" element={<AuditLog />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
       
-      {/* 3. Render the Modal globally */}
       <ShortcutsModal open={isOpen} onOpenChange={setIsOpen} />
     </BrowserRouter>
   );
